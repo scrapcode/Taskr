@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Taskr.API.Data;
 using Taskr.API.Models;
+using Taskr.API.Services;
 
 namespace Taskr.API.Controllers
 {
@@ -13,33 +14,73 @@ namespace Taskr.API.Controllers
         private readonly TaskrDbContext _context = context;
 
         [HttpGet]
-        public async Task<ActionResult<List<TaskItem>>> GetTasks()
+        public async Task<ActionResult<List<TaskItemDto>>> GetTasks()
         {
-            return Ok(await _context.TaskItems.ToListAsync());
+            var tasksWithTags = await _context.TaskItems
+                .Select(t => new TaskItemDto
+                {
+                    Id = t.Id,
+                    Title = t.Title,
+                    Content = t.Content,
+                    Tags = t.TaskTags.Select(tt => new TagDto
+                    {
+                        Id = tt.Tag.Id,
+                        Name = tt.Tag.Name
+                    }).ToList()
+                })
+                .ToListAsync();
+
+            return Ok(tasksWithTags);
         }
 
         [HttpGet("{id}")]
         public async Task<ActionResult<TaskItem>> GetTaskById(int id)
         {
-            var task = await _context.TaskItems.FindAsync(id);
+            var taskDto = await _context.TaskItems
+                .Where(t => t.Id == id)
+                .Select(t => new TaskItemDto
+                {
+                    Id = t.Id,
+                    Title = t.Title,
+                    Content = t.Content,
+                    Tags = t.TaskTags.Select(tt => new TagDto
+                    {
+                        Id = tt.Tag.Id,
+                        Name = tt.Tag.Name
+                    }).ToList()
+                })
+                .FirstOrDefaultAsync();
 
-            if (task is null)
+            if (taskDto is null)
                 return NotFound();
             
-            return Ok(task);
+            return Ok(taskDto);
         }
 
         [HttpPost]
-        public async Task<ActionResult<TaskItem>> AddTask(TaskItem taskItem)
+        public async Task<ActionResult<TaskItemDto>> AddTask(TaskAddDto taskItem)
         {
             if (taskItem is null)
                 return BadRequest();
 
-            _context.TaskItems.Add(taskItem);
+            // split into tags
+            List<string> tags = taskItem.Tags.Split(',').Select(t => t.Trim().ToLower()).Distinct().ToList();
 
-            await _context.SaveChangesAsync();
+            TaskItemService taskItemService = new TaskItemService(_context);
 
-            return CreatedAtAction(nameof(GetTaskById), new { id = taskItem.Id }, taskItem);
+            var newTaskItem = await taskItemService.AddTaskItemWithTagsAsync(taskItem.Title, taskItem.Content, tags);
+
+            return new TaskItemDto
+            {
+                Id = newTaskItem.Id,
+                Title = newTaskItem.Title,
+                Content = newTaskItem.Content,
+                Tags = newTaskItem.TaskTags.Select(tt => new TagDto
+                {
+                    Id = tt.Tag.Id,
+                    Name = tt.Tag.Name
+                }).ToList()
+            };
         }
 
         [HttpPut("{id}")]
