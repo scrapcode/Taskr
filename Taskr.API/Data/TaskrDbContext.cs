@@ -8,12 +8,26 @@ namespace Taskr.API.Data
     public class TaskrDbContext : IdentityDbContext<User>
     {
         public DbSet<TaskItem> TaskItems => Set<TaskItem>();
+        public DbSet<Tag> Tags => Set<Tag>();
+        public DbSet<TaskTag> TaskTags => Set<TaskTag>();
 
         public TaskrDbContext(DbContextOptions<TaskrDbContext> options) : base(options) { }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            modelBuilder.Entity<TaskTag>().HasKey(tt => new { tt.TaskItemId, tt.TagId });
+
+            modelBuilder.Entity<TaskTag>()
+                .HasOne(tt => tt.TaskItem)
+                .WithMany(t => t.TaskTags)
+                .HasForeignKey(tt => tt.TaskItemId);
+
+            modelBuilder.Entity<TaskTag>()
+                .HasOne(tt => tt.Tag)
+                .WithMany(t => t.TaskTags)
+                .HasForeignKey(tt => tt.TagId);
 
             modelBuilder.Entity<TaskItem>().HasData(
                 new TaskItem
