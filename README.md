@@ -1,9 +1,15 @@
+# Taskr
+**Kanban Task Manager**
 
+### Used in this project
 
-### Tech Components Used
-
+- .NET 9
+- React 19
+- Vite
 - Microsoft SQL Server
 	- Microsoft SQL Server Studio
 - OpenAPI (Swagger)
 	- Scalar
 - Entity Framework
+- Identity
+- JSON Web Token (JWT) Authentication
