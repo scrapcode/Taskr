@@ -43,6 +43,7 @@ namespace Taskr.API.Controllers
                     Id = t.Id,
                     Title = t.Title,
                     Content = t.Content,
+                    Status = t.Status,
                     Tags = t.TaskTags.Select(tt => new TagDto
                     {
                         Id = tt.Tag.Id,
@@ -84,7 +85,7 @@ namespace Taskr.API.Controllers
         }
 
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateTask(int id, TaskItem updatedTask)
+        public async Task<IActionResult> UpdateTask(int id, TaskEditDto updatedTask)
         {
             var task = await _context.TaskItems.FindAsync(id);
 
@@ -93,6 +94,7 @@ namespace Taskr.API.Controllers
 
             task.Title = updatedTask.Title;
             task.Content = updatedTask.Title;
+            task.Status = updatedTask.Status;
 
             await _context.SaveChangesAsync();
 

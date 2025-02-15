@@ -13,7 +13,16 @@ namespace Taskr.API.Models
 
         public string Content { get; set; } = string.Empty;
 
-        //[JsonIgnore]
+        public TaskStatus Status { get; set; } = TaskStatus.Backlog;
+
         public List<TaskTag> TaskTags { get; set; } = new();
+    }
+
+    public enum TaskStatus
+    {
+        Backlog,
+        ToDo,
+        InProgress,
+        Done
     }
 }
